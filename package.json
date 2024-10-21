@@ -1,0 +1,21 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@elysiajs/swagger": "^1.1.5",
+    "@libsql/client": "^0.14.0",
+    "drizzle-orm": "^0.35.2",
+    "elysia": "^1.1.22",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "bun-types": "^1.1.31",
+    "drizzle-kit": "^0.26.2"
+  },
+  "module": "src/index.ts"
+}
