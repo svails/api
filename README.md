@@ -1,25 +1,14 @@
 # api
 
-API starterkit that includes:
+To get started, run following:
 
-- Authentication
-- Database with SQLite and Turso
-- Swagger for documentation
-- Dockerfile for deployment
-
-```sh
-git clone https://github.com/svelterust/api
+```
+git clone https://github.com/svails/api
 cd api/
-bun i
+bun install
 bun dev
 ```
 
-## Deploy to production
+## Migrations
 
-```sh
-fly app create # modify fly.toml and change name
-turso db create # run the commands to get secrets and set below
-fly secrets set TURSO_DATABASE_URL=
-fly secrets set TURSO_AUTH_TOKEN=
-fly deploy
-```
+After modifying `src/lib/schema.ts`, generate migration files with `bun db:generate`.
