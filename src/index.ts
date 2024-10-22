@@ -3,7 +3,7 @@ import { Elysia, t } from "elysia";
 import { auth } from "$lib/elysia";
 import { login, register } from "$lib/session";
 import { swagger } from "@elysiajs/swagger";
-import { addJob, processJobs, setWorker, now } from "$lib/queue";
+import { addJob, processJobs, setWorker } from "$lib/queue";
 
 // Schema for validation
 const userSchema = z.object({
