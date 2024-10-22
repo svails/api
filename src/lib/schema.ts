@@ -17,5 +17,13 @@ export const sessionTable = sqliteTable("session", {
   }).notNull(),
 });
 
+export const jobTable = sqliteTable("job", {
+  id: integer("id").primaryKey(),
+  type: text("type").notNull(),
+  data: text("payload").notNull(),
+  status: text("status").notNull().default("pending"),
+});
+
 export type User = Omit<InferSelectModel<typeof userTable>, "passwordHash">;
 export type Session = InferSelectModel<typeof sessionTable>;
+export type Job = InferSelectModel<typeof jobTable>;

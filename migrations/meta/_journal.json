@@ -8,6 +8,13 @@
       "when": 1729346637432,
       "tag": "0000_spicy_stark_industries",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1729578777461,
+      "tag": "0001_hard_talos",
+      "breakpoints": true
     }
   ]
 }
