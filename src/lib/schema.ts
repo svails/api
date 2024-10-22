@@ -23,7 +23,7 @@ export const jobTable = sqliteTable("job", {
   type: text("type").notNull(),
   data: text("payload").notNull(),
   status: text("status").notNull().default("pending"),
-  date: integer("date", { mode: "timestamp" }).notNull(),
+  date: integer("date", { mode: "timestampms" }).notNull(),
 }, (table) => {
   return {
     statusIndex: index("status_index").on(table.status),

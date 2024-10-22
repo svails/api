@@ -6,13 +6,46 @@ import { jobTable, type Job as DbJob } from "$lib/schema";
 type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
 type Job<T> = Expand<Omit<DbJob, "data"> & { data: T }>;
 type Fn<T> = (data: Job<T>) => Promise<void>;
+type Delay = {
+  milliseconds?: number;
+  seconds?: number;
+  minutes?: number;
+  hours?: number;
+  days?: number;
+  months?: number;
+  years?: number;
+};
+type Config = {
+  delay: Delay;
+};
 
 // Workers
 const workers = new Map<string, Fn<any>>();
 
-export async function addJob<T>(type: string, data: T, date?: Date): Promise<void> {
+function calculateDate(dateOrConfig: Date | Config): Date {
+  if (dateOrConfig instanceof Date) {
+    // Schedule for that date
+    return dateOrConfig;
+  } else {
+    // Schedule for later
+    const now = new Date();
+    const delay = dateOrConfig.delay;
+    return new Date(
+      now.getFullYear() + (delay.years || 0),
+      now.getMonth() + (delay.months || 0),
+      now.getDate() + (delay.days || 0),
+      now.getHours() + (delay.hours || 0),
+      now.getMinutes() + (delay.minutes || 0),
+      now.getSeconds() + (delay.seconds || 0),
+      now.getMilliseconds() + (delay.milliseconds || 0),
+    );
+  }
+}
+
+export async function addJob<T>(type: string, data: T, dateOrConfig?: Date | Config): Promise<void> {
   // Add job to queue
-  const job = { type, data: JSON.stringify(data), date: date || new Date(Date.now()) };
+  const date = dateOrConfig ? calculateDate(dateOrConfig) : new Date(Date.now());
+  const job = { type, data: JSON.stringify(data), date };
   await db.insert(jobTable).values(job);
 }
 
@@ -33,8 +66,7 @@ const getJobs = db.select()
 
 export async function processJobs() {
   // Get jobs from queue
-  const date = Math.floor(Date.now() / 1000);
-  const jobs = await getJobs.all({ date });
+  const jobs = await getJobs.all({ date: Date.now() });
   if (jobs.length == 0) return;
 
   // Attach job to worker

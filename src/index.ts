@@ -24,9 +24,13 @@ const app = new Elysia()
     }
     return { status: "error", message: error.message };
   })
-  .post("/job", async ({ body: { name } }) => {
+  .post("/job", async ({ body: data }) => {
     // Add job
-    await addJob("log", { name }, new Date(Date.now() + 10 * 1000));
+    await addJob("log", data, {
+      delay: {
+        seconds: 3
+      }
+    });
   }, {
     body: t.Object({
       name: t.String(),
