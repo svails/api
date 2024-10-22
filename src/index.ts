@@ -3,7 +3,7 @@ import { Elysia, t } from "elysia";
 import { auth } from "$lib/elysia";
 import { login, register } from "$lib/session";
 import { swagger } from "@elysiajs/swagger";
-import { addJob, processJobs, setWorker, workers } from "$lib/queue";
+import { addJob, processJobs, setWorker, now } from "$lib/queue";
 
 // Schema for validation
 const userSchema = z.object({
@@ -26,7 +26,7 @@ const app = new Elysia()
   })
   .post("/job", async ({ body: { name } }) => {
     // Add job
-    await addJob("log", { name });
+    await addJob("log", { name }, new Date(Date.now() + 10 * 1000));
   }, {
     body: t.Object({
       name: t.String(),

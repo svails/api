@@ -1,5 +1,5 @@
 import { db } from "$lib/database";
-import { eq, gte, sql, and } from "drizzle-orm";
+import { eq, lte, sql, and } from "drizzle-orm";
 import { jobTable, type Job as DbJob } from "$lib/schema";
 
 // Types
@@ -8,11 +8,11 @@ type Job<T> = Expand<Omit<DbJob, "data"> & { data: T }>;
 type Fn<T> = (data: Job<T>) => Promise<void>;
 
 // Workers
-export const workers = new Map<string, Fn<any>>();
+const workers = new Map<string, Fn<any>>();
 
-export async function addJob<T>(type: string, data: T): Promise<void> {
+export async function addJob<T>(type: string, data: T, date?: Date): Promise<void> {
   // Add job to queue
-  const job = { type, data: JSON.stringify(data) };
+  const job = { type, data: JSON.stringify(data), date: date || new Date(Date.now()) };
   await db.insert(jobTable).values(job);
 }
 
@@ -21,23 +21,24 @@ export function setWorker<T>(type: string, fn: Fn<T>) {
   workers.set(type, fn);
 }
 
+// Pre-compile queries
+const getJobs = db.select()
+  .from(jobTable)
+  .where(
+    and(
+      eq(jobTable.status, "pending"),
+      lte(jobTable.date, sql.placeholder("date"))
+    )
+  ).prepare();
+
 export async function processJobs() {
   // Get jobs from queue
-  const jobs = await db.select()
-    .from(jobTable)
-    .where(
-      and(
-        eq(jobTable.status, "pending"),
-        gte(jobTable.date, sql`(cast(strftime('%s','now') as int))`)
-      )
-    );
+  const date = Math.floor(Date.now() / 1000);
+  const jobs = await getJobs.all({ date });
   if (jobs.length == 0) return;
 
-  // Set status to processing
-  const setProcessing = jobs.map((job) => db.update(jobTable).set({ status: "processing" }).where(eq(jobTable.id, job.id)));
-  await db.batch(setProcessing);
-
   // Attach job to worker
+  await db.batch(jobs.map((job) => db.update(jobTable).set({ status: "processing" }).where(eq(jobTable.id, job.id))));
   const tasks = jobs.map(async (job) => {
     const worker = workers.get(job.type);
     if (worker) {
