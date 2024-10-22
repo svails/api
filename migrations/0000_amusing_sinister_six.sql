@@ -1,3 +1,11 @@
+CREATE TABLE `job` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`type` text NOT NULL,
+	`payload` text NOT NULL,
+	`status` text DEFAULT 'pending' NOT NULL,
+	`date` integer DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE `session` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` integer NOT NULL,

@@ -12,9 +12,7 @@ const userSchema = z.object({
 });
 
 // Setup Workers and event loop
-setWorker("log", async (job) => {
-  console.log(job);
-});
+setWorker("log", async (job) => console.log(job));
 setInterval(processJobs, 100);
 
 const app = new Elysia()
@@ -28,7 +26,7 @@ const app = new Elysia()
   })
   .post("/job", async ({ body: { name } }) => {
     // Add job
-    return addJob("log", { name });
+    return addJob("log", { name: Math.random().toString(36) });
   }, {
     body: t.Object({
       name: t.String(),

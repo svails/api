@@ -1,5 +1,5 @@
 import { db } from "$lib/database";
-import { eq } from "drizzle-orm";
+import { eq, gte, sql, and } from "drizzle-orm";
 import { jobTable, type Job as DbJob } from "$lib/schema";
 
 // Types
@@ -23,7 +23,14 @@ export function setWorker<T>(type: string, fn: Fn<T>) {
 
 export async function processJobs() {
   // Get jobs from queue
-  const jobs = await db.select().from(jobTable).where(eq(jobTable.status, "pending"));
+  const jobs = await db.select()
+    .from(jobTable)
+    .where(
+      and(
+        eq(jobTable.status, "pending"),
+        gte(jobTable.date, sql`(cast(strftime('%s','now') as int))`)
+      )
+    );
   if (jobs.length == 0) return;
 
   // Set status to processing

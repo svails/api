@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "07d01d1b-752b-4442-a2dc-a6935d45e332",
-  "prevId": "47a3a406-b0e5-45bc-bd56-77cdd097846f",
+  "id": "ced6e086-2340-494e-9ef3-21817b912ca8",
+  "prevId": "1fd7b9b6-a2e2-4aee-8cc6-b63c85585ea8",
   "tables": {
     "job": {
       "name": "job",
@@ -33,10 +33,27 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "date": {
+          "name": "date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(strftime('%s','now') as int))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "status_index": {
+          "name": "status_index",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
