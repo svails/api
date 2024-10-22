@@ -3,7 +3,7 @@ import { Elysia, t } from "elysia";
 import { auth } from "$lib/elysia";
 import { login, register } from "$lib/session";
 import { swagger } from "@elysiajs/swagger";
-import { addJob, processJobs, setWorker } from "$lib/queue";
+import { addJob, setWorker } from "$lib/queue";
 
 // Schema for validation
 const userSchema = z.object({
@@ -12,9 +12,9 @@ const userSchema = z.object({
 });
 
 // Setup Workers and event loop
-let number = 0;
-setWorker("log", async (job) => { number += 1; });
-setInterval(processJobs, 100);
+setWorker("log", async (job) => {
+  console.log(job.name);
+});
 
 const app = new Elysia()
   .use(auth)

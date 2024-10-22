@@ -43,7 +43,7 @@ function calculateDate(dateOrConfig: Date | Config): Date {
 // Workers
 const workers = new Map<string, Fn<any>>();
 
-// Add jobs in batches from memory
+// Setup in-memory jobs batch and event loop
 var jobsBatch = new Array();
 setInterval(async () => {
   if (jobsBatch.length > 0) {
@@ -51,6 +51,7 @@ setInterval(async () => {
     jobsBatch.length = 0;
   }
 }, 10);
+setInterval(processJobs, 100);
 
 export async function addJob<T>(type: string, data: T, dateOrConfig?: Date | Config): Promise<void> {
   // Add job to queue
