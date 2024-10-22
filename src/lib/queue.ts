@@ -9,13 +9,14 @@ type Fn<T> = (data: Job<T>) => Promise<void>;
 // Workers
 export const workers = new Map<string, Fn<any>>();
 
-export async function addJob<T>(type: string, data: T) {
+export async function addJob<T>(type: string, data: T): Promise<number> {
   // Add job to queue
   const job = { type, data: JSON.stringify(data) };
-  await db.insert(jobTable).values(job);
+  const jobs = await db.insert(jobTable).values(job).returning({ id: jobTable.id });
+  return jobs[0].id;
 }
 
-export async function setWorker<T>(type: string, fn: Fn<T>) {
+export function setWorker<T>(type: string, fn: Fn<T>) {
   // Set worker for type
   workers.set(type, fn);
 }
@@ -25,30 +26,29 @@ export async function processJobs() {
   const jobs = await db.select().from(jobTable).where(eq(jobTable.status, "pending"));
   if (jobs.length == 0) return;
 
-  // Start processing jobs
+  // Set status to processing
+  const setProcessing = jobs.map((job) => db.update(jobTable).set({ status: "processing" }).where(eq(jobTable.id, job.id)));
+  await db.batch(setProcessing);
+
+  // Attach job to worker
   const tasks = jobs.map(async (job) => {
     const worker = workers.get(job.type);
     if (worker) {
-      // Process job and update status accordingly
-      const jobId = await db.transaction(async (tx) => {
-        await tx.update(jobTable).set({ status: "processing" }).where(eq(jobTable.id, job.id));
-        try {
-          await worker(JSON.parse(job.data));
-          await tx.update(jobTable).set({ status: "finished" }).where(eq(jobTable.id, job.id));
-          return job.id;
-        } catch (error) {
-          console.error(error);
-          await tx.update(jobTable).set({ status: "failed" }).where(eq(jobTable.id, job.id));
-        }
-      });
-      return jobId;
+      // Process job
+      try {
+        await worker(JSON.parse(job.data));
+        return { id: job.id, status: "finished" };
+      } catch (error) {
+        console.error(error);
+        return { id: job.id, status: "failed" };
+      }
     }
   });
 
   // Wait for all jobs to finish
   const processedJobs = await Promise.all(tasks);
-  return {
-    finished: processedJobs.filter(job => job != undefined),
-    failed: processedJobs.filter(job => job == undefined)
-  };
+  const updateStatus = processedJobs
+    .filter((job) => job != undefined)
+    .map((job) => db.update(jobTable).set({ status: job.status }).where(eq(jobTable.id, job.id)));
+  await db.batch(updateStatus);
 }

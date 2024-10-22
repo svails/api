@@ -3,11 +3,19 @@ import { Elysia, t } from "elysia";
 import { auth } from "$lib/elysia";
 import { login, register } from "$lib/session";
 import { swagger } from "@elysiajs/swagger";
+import { addJob, processJobs, setWorker, workers } from "$lib/queue";
 
+// Schema for validation
 const userSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, { message: "Password must be at least 8 characters long" }),
 });
+
+// Setup Workers and event loop
+setWorker("log", async (job) => {
+  console.log(job);
+});
+setInterval(processJobs, 100);
 
 const app = new Elysia()
   .use(auth)
@@ -15,12 +23,17 @@ const app = new Elysia()
   .onError(({ code, redirect, error }) => {
     if (code == "NOT_FOUND") {
       return redirect("/swagger");
-    } else {
-      return {
-        status: "error",
-        message: error.message,
-      };
     }
+    return { status: "error", message: error.message };
+  })
+  .post("/job", async ({ body: { name } }) => {
+    // Add job
+    return addJob("log", { name });
+  }, {
+    body: t.Object({
+      name: t.String(),
+    }),
+    response: t.Number(),
   })
   .post("/register", async ({ body: { email, password } }) => {
     // Validate user input
