@@ -19,9 +19,7 @@ type Config = {
   delay: Delay;
 };
 
-// Workers
-const workers = new Map<string, Fn<any>>();
-
+// Dates helper
 function calculateDate(dateOrConfig: Date | Config): Date {
   if (dateOrConfig instanceof Date) {
     // Schedule for that date
@@ -42,11 +40,23 @@ function calculateDate(dateOrConfig: Date | Config): Date {
   }
 }
 
+// Workers
+const workers = new Map<string, Fn<any>>();
+
+// Add jobs in batches from memory
+var jobsBatch = new Array();
+setInterval(async () => {
+  if (jobsBatch.length > 0) {
+    await db.batch(jobsBatch);
+    jobsBatch.length = 0;
+  }
+}, 10);
+
 export async function addJob<T>(type: string, data: T, dateOrConfig?: Date | Config): Promise<void> {
   // Add job to queue
   const date = dateOrConfig ? calculateDate(dateOrConfig) : new Date(Date.now());
   const job = { type, data: JSON.stringify(data), date };
-  await db.insert(jobTable).values(job);
+  jobsBatch.push(db.insert(jobTable).values(job));
 }
 
 export function setWorker<T>(type: string, fn: Fn<T>) {

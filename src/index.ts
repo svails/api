@@ -12,7 +12,8 @@ const userSchema = z.object({
 });
 
 // Setup Workers and event loop
-setWorker("log", async (job) => console.log(job));
+let number = 0;
+setWorker("log", async (job) => { number += 1; });
 setInterval(processJobs, 100);
 
 const app = new Elysia()
@@ -24,17 +25,9 @@ const app = new Elysia()
     }
     return { status: "error", message: error.message };
   })
-  .post("/job", async ({ body: data }) => {
+  .get("/job", async () => {
     // Add job
-    await addJob("log", data, {
-      delay: {
-        seconds: 3
-      }
-    });
-  }, {
-    body: t.Object({
-      name: t.String(),
-    }),
+    await addJob("log", { name: crypto.randomUUID() });
   })
   .post("/register", async ({ body: { email, password } }) => {
     // Validate user input
