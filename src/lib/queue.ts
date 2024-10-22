@@ -3,17 +3,17 @@ import { eq, gte, sql, and } from "drizzle-orm";
 import { jobTable, type Job as DbJob } from "$lib/schema";
 
 // Types
-type Job<T> = Omit<DbJob, "data"> & { data: T };
+type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
+type Job<T> = Expand<Omit<DbJob, "data"> & { data: T }>;
 type Fn<T> = (data: Job<T>) => Promise<void>;
 
 // Workers
 export const workers = new Map<string, Fn<any>>();
 
-export async function addJob<T>(type: string, data: T): Promise<number> {
+export async function addJob<T>(type: string, data: T): Promise<void> {
   // Add job to queue
   const job = { type, data: JSON.stringify(data) };
-  const jobs = await db.insert(jobTable).values(job).returning({ id: jobTable.id });
-  return jobs[0].id;
+  await db.insert(jobTable).values(job);
 }
 
 export function setWorker<T>(type: string, fn: Fn<T>) {

@@ -26,12 +26,11 @@ const app = new Elysia()
   })
   .post("/job", async ({ body: { name } }) => {
     // Add job
-    return addJob("log", { name: Math.random().toString(36) });
+    await addJob("log", { name });
   }, {
     body: t.Object({
       name: t.String(),
     }),
-    response: t.Number(),
   })
   .post("/register", async ({ body: { email, password } }) => {
     // Validate user input
