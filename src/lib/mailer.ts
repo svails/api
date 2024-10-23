@@ -1,9 +1,6 @@
 import nodemailer from "nodemailer";
 import { type Attachment } from "nodemailer/lib/mailer";
 
-// Account settings
-const useEmail = process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD && process.env.SMTP_HOST;
-
 // Options for sending mail
 type SendMail = {
   to: string;
@@ -13,7 +10,7 @@ type SendMail = {
 };
 
 export async function sendMail({ to, subject, html, attachments }: SendMail) {
-  if (useEmail) {
+  if (process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD && process.env.SMTP_HOST) {
     const account = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465,
@@ -31,8 +28,8 @@ export async function sendMail({ to, subject, html, attachments }: SendMail) {
       attachments,
     });
   } else {
-    console.log(`✉️ Sending email to: ${to}...`);
-    console.log(`📋 Subject: "${subject}"`);
+    console.log(`✉️  ${to}`);
+    console.log(`📋 Subject: ${subject}`);
     console.log(`📝 HTML: ${html}`);
     if (attachments)
       console.log(`📎 Attachments: ${attachments.length}`);
