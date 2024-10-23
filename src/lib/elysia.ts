@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Elysia, t } from "elysia";
-import { login, register, validateSessionToken } from "$lib/session";
 import swagger from "@elysiajs/swagger";
+import { login, register, validateSessionToken } from "$lib/session";
 
 const userSchema = z.object({
   email: z.string().email(),
