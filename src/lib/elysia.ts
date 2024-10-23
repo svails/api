@@ -1,9 +1,9 @@
 import { z } from "zod";
+import { folder } from "$lib/files";
+import { login, register, validateSessionToken } from "$lib/session";
 import { Elysia, t } from "elysia";
 import { html } from "@elysiajs/html";
 import { staticPlugin } from "@elysiajs/static";
-import { folder } from "$lib/files";
-import { login, register, validateSessionToken } from "$lib/session";
 import swagger from "@elysiajs/swagger";
 
 const userSchema = z.object({
