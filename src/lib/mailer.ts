@@ -1,16 +1,18 @@
 import nodemailer from "nodemailer";
 import { type Attachment } from "nodemailer/lib/mailer";
 
-// Options for sending mail
 type SendMail = {
   to: string;
   subject: string;
-  html: string;
+  html: string | Promise<string>;
   attachments?: Attachment[];
 };
 
-export async function sendMail({ to, subject, html, attachments }: SendMail) {
+export async function sendMail({ to, subject, html: tsx, attachments }: SendMail) {
+  // Evaluate HTML first if it's TSX
+  const html = tsx instanceof Promise ? await tsx : tsx;
   if (process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD && process.env.SMTP_HOST) {
+    // Create account for sending mail
     const account = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465,
@@ -20,6 +22,7 @@ export async function sendMail({ to, subject, html, attachments }: SendMail) {
       },
     });
 
+    // If HTML is JSX, evaluate it first
     await account.sendMail({
       from: `${process.env.SMTP_NAME} <${process.env.SMTP_EMAIL}>`,
       to,

@@ -2,11 +2,12 @@
   "name": "api",
   "version": "0.1.0",
   "scripts": {
-    "dev": "bun run --watch src/index.ts",
+    "dev": "bun run --watch src/index.tsx",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@elysiajs/html": "^1.1.1",
     "@elysiajs/swagger": "^1.1.5",
     "@libsql/client": "^0.14.0",
     "drizzle-orm": "^0.35.2",
@@ -19,5 +20,5 @@
     "bun-types": "^1.1.31",
     "drizzle-kit": "^0.26.2"
   },
-  "module": "src/index.ts"
+  "module": "src/index.tsx"
 }
