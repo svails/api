@@ -8,19 +8,19 @@ const userSchema = z.object({
   password: z.string().min(8, { message: "Password must be at least 8 characters long" }),
 });
 
-// Middleware with docs, auth, login and register
-export const svails = new Elysia()
+// Middleware with docs, auth, register and login
+export const svails = (app: Elysia) => app
   .use(swagger())
   .onError(({ code, redirect, error }) => {
-    if (code == "NOT_FOUND") {
+    if (code == "NOT_FOUND")
       return redirect("/swagger");
-    }
     return { status: "error", message: error.message };
   })
   .derive({ as: "global" }, async ({ request }) => {
     // Validate token from request
     const token = request.headers.get("Authorization")?.split(" ")[1];
-    if (!token) return { user: null, session: null };
+    if (!token)
+      return { user: null, session: null };
     return validateSessionToken(token);
   })
   .post("/register", async ({ body: { email, password } }) => {
