@@ -72,7 +72,7 @@ export async function list(path: string = "."): Promise<string[] | undefined> {
       Prefix: path,
     }));
     if (data.Contents)
-      return data.Contents.flatMap((item) => (item.Key ? [item.Key] : []));
+      return data.Contents.flatMap(item => (item.Key ? [item.Key] : []));
   } else {
     return fs.readdir(folder + path);
   }
