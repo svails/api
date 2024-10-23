@@ -1,76 +1,31 @@
 import { db } from "$lib/database";
-import { eq, lte, sql, and } from "drizzle-orm";
-import { jobTable, type Job as DbJob } from "$lib/schema";
+import { jobTable } from "$lib/schema";
+import { eq, lte, sql, and, or } from "drizzle-orm";
 
-// Types
-type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
-type Job<T> = Expand<Omit<DbJob, "data"> & { data: T }>;
-type Fn<T> = (data: Job<T>) => Promise<void>;
-type Delay = {
-  milliseconds?: number;
-  seconds?: number;
-  minutes?: number;
-  hours?: number;
-  days?: number;
-  months?: number;
-  years?: number;
-};
-type Config = {
-  delay: Delay;
-};
-
-// Dates helper
-function calculateDate(dateOrConfig: Date | Config): Date {
-  if (dateOrConfig instanceof Date) {
-    // Schedule for that date
-    return dateOrConfig;
-  } else {
-    // Schedule for later
-    const now = new Date();
-    const delay = dateOrConfig.delay;
-    return new Date(
-      now.getFullYear() + (delay.years || 0),
-      now.getMonth() + (delay.months || 0),
-      now.getDate() + (delay.days || 0),
-      now.getHours() + (delay.hours || 0),
-      now.getMinutes() + (delay.minutes || 0),
-      now.getSeconds() + (delay.seconds || 0),
-      now.getMilliseconds() + (delay.milliseconds || 0),
-    );
-  }
-}
-
-// Workers
-const workers = new Map<string, Fn<any>>();
-
-// Setup in-memory jobs batch and event loop
-var jobsBatch = new Array();
-setInterval(async () => {
-  if (jobsBatch.length > 0) {
-    await db.batch(jobsBatch);
-    jobsBatch.length = 0;
-  }
-}, 10);
+// Start event loop
+const workers = new Map();
 setInterval(processJobs, 100);
 
-export async function addJob<T>(type: string, data: T, dateOrConfig?: Date | Config): Promise<void> {
-  // Add job to queue
-  const date = dateOrConfig ? calculateDate(dateOrConfig) : new Date(Date.now());
-  const job = { type, data: JSON.stringify(data), date };
-  jobsBatch.push(db.insert(jobTable).values(job));
-}
-
-export function setWorker<T>(type: string, fn: Fn<T>) {
+export function addWorker<T>(type: string, fn: (job: T) => Promise<void>) {
   // Set worker for type
   workers.set(type, fn);
 }
 
-// Pre-compile queries
+export async function addJob<T>(type: string, data: T, date?: Date) {
+  // Add job to queue
+  const job = { type, data: JSON.stringify(data), date: date || new Date(Date.now()) };
+  await db.insert(jobTable).values(job);
+}
+
+// Pre-compile query for perfomance
 const getJobs = db.select()
   .from(jobTable)
   .where(
     and(
-      eq(jobTable.status, "pending"),
+      or(
+        eq(jobTable.status, "pending"),
+        eq(jobTable.status, "failed"),
+      ),
       lte(jobTable.date, sql.placeholder("date"))
     )
   ).prepare();
@@ -80,7 +35,7 @@ export async function processJobs() {
   const jobs = await getJobs.all({ date: Date.now() });
   if (jobs.length == 0) return;
 
-  // Attach job to worker
+  // @ts-ignore: Attach job to worker
   await db.batch(jobs.map((job) => db.update(jobTable).set({ status: "processing" }).where(eq(jobTable.id, job.id))));
   const tasks = jobs.map(async (job) => {
     const worker = workers.get(job.type);
@@ -99,7 +54,9 @@ export async function processJobs() {
   // Wait for all jobs to finish
   const processedJobs = await Promise.all(tasks);
   const updateStatus = processedJobs
-    .filter((job) => job != undefined)
-    .map((job) => db.update(jobTable).set({ status: job.status }).where(eq(jobTable.id, job.id)));
+    .filter(job => job != undefined)
+    .map(job => db.update(jobTable).set({ status: job.status }).where(eq(jobTable.id, job.id)));
+
+  // @ts-ignore: Update status for all jobs
   await db.batch(updateStatus);
 }
