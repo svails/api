@@ -9,7 +9,7 @@ ENV NODE_ENV=production
 
 # Install packages
 COPY package.json bun.lockb ./
-RUN bun install --production
+RUN bun install
 
 # Copy over source code
 COPY src ./src
