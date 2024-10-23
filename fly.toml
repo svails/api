@@ -1,5 +1,4 @@
 app = "svails-api"
-primary_region = "arn"
 
 [http_service]
 internal_port = 3000
