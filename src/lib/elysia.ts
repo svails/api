@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { folder } from "$lib/files";
-import { login, register, validateSessionToken } from "$lib/session";
+import { login, register } from "$lib/session";
 import { Elysia, t } from "elysia";
-import { html } from "@elysiajs/html";
 import { staticPlugin } from "@elysiajs/static";
 import swagger from "@elysiajs/swagger";
 
@@ -13,23 +12,16 @@ const userSchema = z.object({
 
 // Middleware with docs, auth, register and login
 export const svails = (app: Elysia) => app
-  .use(swagger())
-  .use(html())
+  .use(swagger({ path: "/docs" }))
   .use(staticPlugin({
     assets: folder,
     prefix: `/${folder.slice(0, -1)}`,
   }))
   .onError(({ code, redirect, error }) => {
+    // Redirect to docs if not found
     if (code == "NOT_FOUND")
-      return redirect("/swagger");
+      return redirect("/docs");
     return { status: "error", message: error.message };
-  })
-  .derive({ as: "global" }, async ({ request }) => {
-    // Validate token from request
-    const token = request.headers.get("Authorization")?.split(" ")[1];
-    if (!token)
-      return { user: null, session: null };
-    return validateSessionToken(token);
   })
   .post("/register", async ({ body: { email, password } }) => {
     // Validate user input

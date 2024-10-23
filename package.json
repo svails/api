@@ -8,10 +8,10 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.677.0",
-    "@elysiajs/html": "^1.1.1",
     "@elysiajs/static": "^1.1.1",
     "@elysiajs/swagger": "^1.1.5",
     "@libsql/client": "^0.14.0",
+    "@libsql/linux-x64-gnu": "^0.4.6",
     "drizzle-orm": "^0.35.2",
     "elysia": "^1.1.22",
     "nodemailer": "^6.9.15",
