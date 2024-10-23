@@ -33,8 +33,7 @@ const getJobs = db.select()
 export async function processJobs() {
   // Get jobs from queue
   const jobs = await getJobs.all({ date: Date.now() });
-  if (jobs.length == 0)
-    return;
+  if (jobs.length == 0) return;
 
   // @ts-ignore: Attach job to worker
   await db.batch(jobs.map((job) => db.update(jobTable).set({ status: "processing" }).where(eq(jobTable.id, job.id))));

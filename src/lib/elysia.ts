@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { Elysia, t } from "elysia";
-import swagger from "@elysiajs/swagger";
+import { html } from "@elysiajs/html";
+import { staticPlugin } from "@elysiajs/static";
+import { folder } from "$lib/files";
 import { login, register, validateSessionToken } from "$lib/session";
+import swagger from "@elysiajs/swagger";
 
 const userSchema = z.object({
   email: z.string().email(),
@@ -11,6 +14,11 @@ const userSchema = z.object({
 // Middleware with docs, auth, register and login
 export const svails = (app: Elysia) => app
   .use(swagger())
+  .use(html())
+  .use(staticPlugin({
+    assets: folder,
+    prefix: `/${folder.slice(0, -1)}`,
+  }))
   .onError(({ code, redirect, error }) => {
     if (code == "NOT_FOUND")
       return redirect("/swagger");
